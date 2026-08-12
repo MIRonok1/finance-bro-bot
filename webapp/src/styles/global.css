@@ -232,6 +232,49 @@ button.row {
   border-radius: 3px;
 }
 
+/* --- Activity calendar (Профиль, Duolingo-style, без цвета) --- */
+
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.activity-cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: transparent;
+}
+
+.activity-cell-active {
+  background: var(--fg);
+  border-color: var(--fg);
+}
+
+/* --- Live-цена портфеля (WebSocket, Фаза 4) — без цвета, только пульс --- */
+
+.live-pulse {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--fg);
+  vertical-align: middle;
+  animation: live-pulse-fade 1s ease-out;
+}
+
+@keyframes live-pulse-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.25;
+  }
+}
+
 /* --- Avatar --- */
 
 .avatar {

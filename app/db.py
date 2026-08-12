@@ -98,7 +98,10 @@ async def touch_daily_streak(conn: aiosqlite.Connection, user_id: int) -> int:
     обновляет серию дней подряд. Возвращает актуальное значение серии.
 
     Один и тот же день не увеличивает серию повторно; пропущенный день
-    сбрасывает её до 1."""
+    сбрасывает её до 1. Заодно пишет факт активности в user_activity_days
+    (Duolingo-style календарь, Фаза 4) — в отличие от серии, календарю
+    важен сам факт "был активен в этот день", поэтому запись идёт при
+    каждом вызове, включая повторные за один день."""
     today = today_msk()
     today_str = today.isoformat()
 
@@ -110,8 +113,14 @@ async def touch_daily_streak(conn: aiosqlite.Connection, user_id: int) -> int:
     if row is None:
         return 0
 
+    await conn.execute(
+        "INSERT OR IGNORE INTO user_activity_days (user_id, activity_date) VALUES (?, ?)",
+        (user_id, today_str),
+    )
+
     streak, last_active = row["daily_streak"], row["last_active_date"]
     if last_active == today_str:
+        await conn.commit()
         return streak
 
     yesterday_str = (today - timedelta(days=1)).isoformat()
@@ -129,3 +138,17 @@ async def get_daily_streak(conn: aiosqlite.Connection, user_id: int) -> int:
     cursor = await conn.execute("SELECT daily_streak FROM users WHERE telegram_id = ?", (user_id,))
     row = await cursor.fetchone()
     return row["daily_streak"] if row else 0
+
+
+async def get_recent_activity_dates(
+    conn: aiosqlite.Connection, user_id: int, days: int = 28
+) -> set[str]:
+    """Даты (ISO, Europe/Moscow) за последние `days` дней, в которые
+    пользователь был активен — для календаря в Mini App (Фаза 4)."""
+    since = (today_msk() - timedelta(days=days - 1)).isoformat()
+    cursor = await conn.execute(
+        "SELECT activity_date FROM user_activity_days WHERE user_id = ? AND activity_date >= ?",
+        (user_id, since),
+    )
+    rows = await cursor.fetchall()
+    return {row["activity_date"] for row in rows}

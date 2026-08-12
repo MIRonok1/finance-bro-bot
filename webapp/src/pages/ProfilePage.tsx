@@ -1,4 +1,5 @@
 import { api, type MeResponse } from "../api";
+import { ActivityCalendar } from "../components/ActivityCalendar";
 import { ErrorState } from "../components/ErrorState";
 import { LoadingState } from "../components/LoadingState";
 import { useApiData } from "../useApiData";
@@ -18,6 +19,7 @@ function initials(me: MeResponse): string {
 
 export function ProfilePage() {
   const state = useApiData(api.me);
+  const activityState = useApiData(api.activity);
 
   return (
     <div className="page">
@@ -64,6 +66,10 @@ export function ProfilePage() {
               </div>
             </div>
           </div>
+
+          {activityState.status === "ok" && (
+            <ActivityCalendar days={activityState.data.days} />
+          )}
 
           <div className="section-title">Статус</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

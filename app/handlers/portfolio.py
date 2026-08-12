@@ -14,6 +14,7 @@ from aiogram.types import CallbackQuery, Message
 
 from app import texts
 from app.config import Settings
+from app.db import touch_daily_streak
 from app.handlers.filters import not_a_command
 from app.keyboards import CB_PORTFOLIO, main_menu
 from app.mental_math.generators import fmt_decimal
@@ -185,6 +186,7 @@ async def on_buy_quantity(message: Message, db: aiosqlite.Connection, state: FSM
         result.new_quantity,
         result.new_avg_price_kopecks,
     )
+    await touch_daily_streak(db, message.from_user.id)
     await message.answer(
         texts.PORTFOLIO_BUY_DONE.format(
             qty=quantity,
@@ -274,6 +276,7 @@ async def on_sell_quantity(message: Message, db: aiosqlite.Connection, state: FS
         result.new_cash_kopecks,
         result.new_quantity,
     )
+    await touch_daily_streak(db, message.from_user.id)
     await message.answer(
         texts.PORTFOLIO_SELL_DONE.format(
             qty=quantity,

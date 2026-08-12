@@ -25,50 +25,18 @@ BTN_MENTAL_MATH = "🧮 Быстрый счёт"
 BTN_PORTFOLIO = "📈 Портфель"
 BTN_WEBAPP = "🖥 Открыть приложение"
 
-# --- Быстрый счёт (Веха 2) ---
-MM_CHOOSE_DIFFICULTY = "Быстрый счёт — выбери сложность:"
-MM_STOP_BUTTON = "🛑 Завершить"
-MM_CONTINUE = "▶️ Продолжить"
-MM_FINISH = "🏁 Закончить"
-MM_CORRECT = "✅ Верно!"
-MM_INCORRECT = "❌ Неверно."
-MM_YOUR_ANSWER = "Твой ответ: {answer}"
-MM_CORRECT_ANSWER = "Правильный ответ: {answer}"
-MM_STREAK = "🔥 Серия: {streak}"
-MM_SPEED_FAST = "⚡ {s} сек"
-MM_SPEED_NORMAL = "🙂 {s} сек"
-MM_SPEED_SLOW = "🐢 {s} сек"
-MM_COULD_NOT_PARSE = "Не смог распознать число — попробуй ещё раз."
-MM_CHECKPOINT = "Пройдено {total}, верно {correct}, лучшая серия за всё время — {best_streak}."
-MM_SESSION_DONE = (
-    "Готово! Всего {total}, верно {correct} ({pct}%), лучшая серия в этой сессии — {best_streak}."
+# Квиз и устный счёт теперь интерактивны только в Mini App (Фаза 4) — чат
+# больше не гоняет свою FSM-версию тренировки. Кнопки меню либо ведут
+# прямо в приложение (WebAppInfo), либо, если WEBAPP_URL не задан, кажут
+# это сообщение — нерабочей ссылки в никуда быть не должно.
+MODULE_MOVED_TO_WEBAPP = (
+    "Этот модуль переехал в Mini App — сейчас она недоступна (боту не задан "
+    "публичный адрес). Загляни позже."
 )
-MM_BACK_TO_MENU = "⬅️ В меню"
-MM_NOT_IN_SESSION = "Сессия не активна — начни заново через /start."
-
-# --- Квиз (Веха 1) ---
-QUIZ_CHOOSE_TOPIC = "Выбери тему:"
-QUIZ_CHOOSE_DIFFICULTY = "Выбери сложность (или «Любая»):"
-QUIZ_DIFF_ANY = "Любая"
-QUIZ_NO_QUESTIONS = (
-    "По этой теме и сложности пока нет одобренных вопросов. Попробуй другую комбинацию."
+REVIEW_NEEDS_WEBAPP = (
+    "Повторение теперь проходит в Mini App, а она сейчас недоступна "
+    "(боту не задан публичный адрес). Загляни позже."
 )
-QUIZ_QUESTION_HEADER = "Вопрос {i}/{n} · {topic} · сложность {difficulty}"
-QUIZ_NUMERIC_HINT = "\n\nНапиши число (например: 1.5, 1 500 000, 1.5 млрд)."
-QUIZ_OPEN_HINT = "\n\nНапиши свой ответ текстом — после этого покажу эталонный разбор."
-QUIZ_CORRECT = "✅ Верно!"
-QUIZ_INCORRECT = "❌ Неверно."
-QUIZ_YOUR_ANSWER = "Твой ответ: {answer}"
-QUIZ_COULD_NOT_PARSE = "Не смог распознать число в ответе — попробуй ещё раз."
-QUIZ_EXPLANATION = "Разбор:\n{explanation}"
-QUIZ_RATE_YOURSELF = "Как оцениваешь свой ответ по сравнению с разбором?"
-QUIZ_RATE_CORRECT = "✅ Верно"
-QUIZ_RATE_PARTIAL = "🟡 Частично"
-QUIZ_RATE_INCORRECT = "❌ Неверно"
-QUIZ_NEXT = "Далее ➡️"
-QUIZ_SESSION_DONE = "Сессия завершена: {correct}/{total} верно."
-QUIZ_BACK_TO_MENU = "⬅️ В меню"
-QUIZ_NOT_IN_SESSION = "Сессия не активна — начни заново через /start."
 
 # --- Прогресс и повторение (Веха 3) ---
 STATS_HEADER = "📊 Твоя статистика"
@@ -84,9 +52,6 @@ STATS_NO_MENTAL_MATH = "Пока нет попыток в «Быстрый сч�
 STATS_DAILY_STREAK = "🔥 Серия дней подряд: {streak}"
 STATS_DUE_REVIEW = "🔁 Вопросов на повторение: {count}"
 STATS_START_REVIEW_BUTTON = "🔁 Начать повторение"
-STATS_NOTHING_TO_REVIEW = (
-    "Нечего повторять — все вопросы либо не отвечены, либо ещё не подошёл срок."
-)
 
 # --- Портфель (Веха 5, Фаза 2) ---
 PORTFOLIO_HEADER = "📈 Портфель"

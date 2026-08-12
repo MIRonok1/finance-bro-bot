@@ -1,11 +1,16 @@
+import { useNavigate } from "react-router-dom";
+
 import { api } from "../api";
 import { ErrorState } from "../components/ErrorState";
 import { LineChart } from "../components/LineChart";
 import { LoadingState } from "../components/LoadingState";
 import { useApiData } from "../useApiData";
 
+const DIFFICULTIES = [1, 2, 3, 4, 5];
+
 export function MentalMathPage() {
   const state = useApiData(api.mentalMathStats);
+  const navigate = useNavigate();
 
   return (
     <div className="page">
@@ -16,6 +21,20 @@ export function MentalMathPage() {
 
       {state.status === "ok" && (
         <>
+          <div className="section-title">Начать</div>
+          <div className="card" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {DIFFICULTIES.map((d) => (
+              <button
+                key={d}
+                className="row"
+                style={{ flex: "1 0 30%", justifyContent: "center" }}
+                onClick={() => navigate(`/mental-math/play?difficulty=${d}`)}
+              >
+                <span className="row-label">{d}</span>
+              </button>
+            ))}
+          </div>
+
           <div className="stat-grid">
             <div className="stat-tile">
               <div className="stat-tile-value">🔥 {state.data.best_streak}</div>

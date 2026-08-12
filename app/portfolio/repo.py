@@ -250,3 +250,19 @@ async def list_held_tickers(conn: aiosqlite.Connection) -> list[str]:
     cursor = await conn.execute("SELECT DISTINCT ticker FROM holdings WHERE quantity > 0")
     rows = await cursor.fetchall()
     return [r["ticker"] for r in rows]
+
+
+async def list_held_tickers_for_user(conn: aiosqlite.Connection, user_id: int) -> list[str]:
+    """Тикеры конкретно этого пользователя — для WS-подписки на живые цены
+    (Фаза 4). В отличие от list_held_tickers (все портфели, используется
+    фоновым 5-минутным рефрешером), здесь нужен just-this-user срез."""
+    cursor = await conn.execute(
+        """
+        SELECT h.ticker FROM holdings h
+        JOIN portfolios p ON p.id = h.portfolio_id
+        WHERE p.user_id = ? AND h.quantity > 0
+        """,
+        (user_id,),
+    )
+    rows = await cursor.fetchall()
+    return [r["ticker"] for r in rows]

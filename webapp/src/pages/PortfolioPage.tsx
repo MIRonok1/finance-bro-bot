@@ -1,13 +1,66 @@
+import { useEffect, useRef, useState } from "react";
+
 import { api } from "../api";
 import { Direction } from "../components/Direction";
 import { ErrorState } from "../components/ErrorState";
 import { LineChart } from "../components/LineChart";
 import { LoadingState } from "../components/LoadingState";
+import { getInitData } from "../telegram";
 import { useApiData } from "../useApiData";
+
+interface LivePrice {
+  price_rub: string;
+  tick: number; // меняется на каждое обновление — триггерит CSS-анимацию пульса заново
+}
+
+/** wss://.../api/portfolio/ws?initData=... — тот же origin, что и остальной
+ * Mini App. initData едет query-параметром, а не заголовком: браузерный
+ * WebSocket не умеет ставить кастомные заголовки на handshake (см.
+ * app/webapp/server.py). */
+function portfolioWsUrl(): string {
+  const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${proto}//${window.location.host}/api/portfolio/ws?initData=${encodeURIComponent(
+    getInitData(),
+  )}`;
+}
+
+/** Живые цены по холдингам через WebSocket (Фаза 4) — только отображение
+ * текущей цены + "пульс"-индикатор; P&L/equity остаются серверным расчётом
+ * из /api/portfolio (см. план: не дублировать денежную арифметику на
+ * фронте, тут только визуальный "живой" эффект). */
+function useLivePrices(): Record<string, LivePrice> {
+  const [prices, setPrices] = useState<Record<string, LivePrice>>({});
+  const tickRef = useRef(0);
+
+  useEffect(() => {
+    if (!getInitData()) return; // вне Telegram-клиента (например, локальный тест) — не подключаемся
+
+    const ws = new WebSocket(portfolioWsUrl());
+    ws.onmessage = (event) => {
+      let msg: { type?: string; ticker?: string; price_rub?: string };
+      try {
+        msg = JSON.parse(event.data as string);
+      } catch {
+        return;
+      }
+      if (msg.type !== "price" || !msg.ticker || !msg.price_rub) return;
+      tickRef.current += 1;
+      setPrices((prev) => ({
+        ...prev,
+        [msg.ticker as string]: { price_rub: msg.price_rub as string, tick: tickRef.current },
+      }));
+    };
+
+    return () => ws.close();
+  }, []);
+
+  return prices;
+}
 
 export function PortfolioPage() {
   const dashboard = useApiData(api.portfolio);
   const history = useApiData(api.portfolioHistory);
+  const livePrices = useLivePrices();
 
   return (
     <div className="page">
@@ -67,19 +120,26 @@ export function PortfolioPage() {
               «Портфель».
             </div>
           )}
-          {dashboard.data.holdings.map((h) => (
-            <div className="row" key={h.ticker} style={{ cursor: "default" }}>
-              <div className="row-main">
-                <div className="row-label">{h.ticker}</div>
-                <div className="row-sub">
-                  {h.quantity} шт. · сред. {h.avg_price_rub} ₽ · тек. {h.price_rub} ₽
+          {dashboard.data.holdings.map((h) => {
+            const live = livePrices[h.ticker];
+            const priceRub = live?.price_rub ?? h.price_rub;
+            return (
+              <div className="row" key={h.ticker} style={{ cursor: "default" }}>
+                <div className="row-main">
+                  <div className="row-label">
+                    {h.ticker}
+                    {live && <span key={live.tick} className="live-pulse" />}
+                  </div>
+                  <div className="row-sub">
+                    {h.quantity} шт. · сред. {h.avg_price_rub} ₽ · тек. {priceRub} ₽
+                  </div>
                 </div>
+                <Direction value={Number(h.pnl_rub)}>
+                  <span className="row-value">{h.pnl_rub} ₽</span>
+                </Direction>
               </div>
-              <Direction value={Number(h.pnl_rub)}>
-                <span className="row-value">{h.pnl_rub} ₽</span>
-              </Direction>
-            </div>
-          ))}
+            );
+          })}
         </>
       )}
     </div>

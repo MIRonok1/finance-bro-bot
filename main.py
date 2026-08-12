@@ -21,9 +21,11 @@ from app.bot_profile import configure_bot_profile
 from app.config import load_settings
 from app.db import open_db
 from app.fsm_storage import SQLiteStorage
-from app.handlers import admin, common, mental_math, payments, portfolio, quiz, review, stats
+from app.handlers import admin, common, payments, portfolio, review, stats
 from app.middlewares import ErrorHandlingMiddleware, ThrottlingMiddleware
 from app.portfolio.background import refresh_price_cache_loop
+from app.portfolio.ws_hub import SubscriptionHub
+from app.portfolio.ws_poll import ws_price_poll_loop
 from app.webapp.server import run_webapp_server
 
 
@@ -58,8 +60,6 @@ async def main() -> None:
 
     dp.include_router(common.router)
     dp.include_router(admin.router)
-    dp.include_router(quiz.router)
-    dp.include_router(mental_math.router)
     dp.include_router(stats.router)
     dp.include_router(review.router)
     dp.include_router(portfolio.router)
@@ -73,12 +73,18 @@ async def main() -> None:
     # процесса — переживает рестарт как обычный кэш, ничего критичного не теряет.
     price_refresh_task = asyncio.create_task(refresh_price_cache_loop(db))
 
+    # Живые цены по WebSocket для Mini App (Фаза 4) — отдельный, более
+    # частый цикл поллинга, но только по тикерам, на которые кто-то
+    # реально подписан прямо сейчас (см. app/portfolio/ws_hub.py).
+    ws_hub = SubscriptionHub()
+    ws_price_task = asyncio.create_task(ws_price_poll_loop(db, ws_hub))
+
     # Команды и описание бота — через Bot API вместо ручных шагов в BotFather.
     # Идемпотентно, безопасно на каждом старте (см. app/bot_profile.py).
     await configure_bot_profile(bot, settings.admin_ids_set)
 
     # Mini App: aiohttp-сервер в том же процессе (Фаза 3, см. CLAUDE.md).
-    webapp_runner = await run_webapp_server(db, settings)
+    webapp_runner = await run_webapp_server(db, settings, ws_hub)
 
     if settings.webapp_url:
         # Постоянная кнопка "☰ Приложение" рядом с полем ввода — стандартный
@@ -99,6 +105,9 @@ async def main() -> None:
         price_refresh_task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await price_refresh_task
+        ws_price_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await ws_price_task
         await webapp_runner.cleanup()
         await db.close()
         await bot.session.close()

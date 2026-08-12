@@ -1,22 +1,21 @@
 """/stats — сводная статистика: темы квиза, mental math, дневная серия,
-вопросы на повторение (упрощённый SM-2) с возможностью сразу их пройти."""
+вопросы на повторение (упрощённый SM-2) со ссылкой пройти их в Mini App.
+
+Само повторение (как и весь квиз/устный счёт) теперь проходит только в
+Mini App (Фаза 4) — здесь только текстовая сводка + кнопка-переход."""
 
 from __future__ import annotations
 
-import uuid
-
 import aiosqlite
-from aiogram import F, Router
+from aiogram import Router
 from aiogram.filters import Command
-from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
 
 from app import texts
+from app.config import Settings
 from app.db import get_daily_streak
-from app.handlers.quiz import QuizStates, _send_question
 from app.mental_math import repo as mm_repo
 from app.quiz import repo as quiz_repo
-from app.quiz.keyboards import CB_START_REVIEW, review_keyboard
 
 router = Router(name="stats")
 
@@ -58,8 +57,21 @@ def _render_stats(
     return "\n".join(lines)
 
 
+def _review_keyboard(webapp_url: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=texts.STATS_START_REVIEW_BUTTON,
+                    web_app=WebAppInfo(url=f"{webapp_url}#/theory/play?mode=review"),
+                )
+            ]
+        ]
+    )
+
+
 @router.message(Command("stats"))
-async def cmd_stats(message: Message, db: aiosqlite.Connection) -> None:
+async def cmd_stats(message: Message, db: aiosqlite.Connection, settings: Settings) -> None:
     user_id = message.from_user.id
     topic_rows = await quiz_repo.topic_stats(db, user_id)
     mm_best, mm_total, mm_correct = await mm_repo.get_stats(db, user_id)
@@ -67,27 +79,11 @@ async def cmd_stats(message: Message, db: aiosqlite.Connection) -> None:
     due_count = await quiz_repo.count_due_questions(db, user_id)
 
     text = _render_stats(topic_rows, mm_best, mm_total, mm_correct, daily_streak, due_count)
-    kb = review_keyboard() if due_count else None
+
+    kb = None
+    if due_count and settings.webapp_url:
+        kb = _review_keyboard(settings.webapp_url)
+    elif due_count:
+        text += "\n" + texts.REVIEW_NEEDS_WEBAPP
+
     await message.answer(text, reply_markup=kb)
-
-
-@router.callback_query(F.data == CB_START_REVIEW)
-async def on_start_review(
-    callback: CallbackQuery, db: aiosqlite.Connection, state: FSMContext
-) -> None:
-    due_ids = await quiz_repo.get_due_question_ids(db, callback.from_user.id)
-    await callback.answer()
-
-    if not due_ids:
-        await callback.message.answer(texts.STATS_NOTHING_TO_REVIEW)
-        return
-
-    session_id = uuid.uuid4().hex
-    await state.update_data(
-        question_ids=due_ids,
-        index=0,
-        session_id=session_id,
-        correct_count=0,
-    )
-    await state.set_state(QuizStates.in_session)
-    await _send_question(callback.message, db, state)

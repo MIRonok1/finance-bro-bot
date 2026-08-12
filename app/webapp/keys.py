@@ -7,6 +7,8 @@ import aiosqlite
 from aiohttp import web
 
 from app.config import Settings
+from app.portfolio.ws_hub import SubscriptionHub
 
 DB_KEY: web.AppKey[aiosqlite.Connection] = web.AppKey("db", aiosqlite.Connection)
 SETTINGS_KEY: web.AppKey[Settings] = web.AppKey("settings", Settings)
+WS_HUB_KEY: web.AppKey[SubscriptionHub] = web.AppKey("ws_hub", SubscriptionHub)

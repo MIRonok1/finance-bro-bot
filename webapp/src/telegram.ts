@@ -46,3 +46,9 @@ export function getInitData(): string {
 export function getTelegramUser(): TelegramWebAppUser | null {
   return getTelegramWebApp()?.initDataUnsafe.user ?? null;
 }
+
+/** Тактильная отдача для мини-игр (Фаза 4) — тихо no-op вне Telegram-клиента
+ * или на платформах без поддержки haptics. */
+export function haptic(style: "light" | "medium" | "heavy" = "light"): void {
+  getTelegramWebApp()?.HapticFeedback?.impactOccurred(style);
+}
