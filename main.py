@@ -17,6 +17,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.types import MenuButtonWebApp, WebAppInfo
 
+from app.bot_profile import configure_bot_profile
 from app.config import load_settings
 from app.db import open_db
 from app.fsm_storage import SQLiteStorage
@@ -71,6 +72,10 @@ async def main() -> None:
     # Фоновая задача обновления кэша котировок MOEX. Живёт только в памяти
     # процесса — переживает рестарт как обычный кэш, ничего критичного не теряет.
     price_refresh_task = asyncio.create_task(refresh_price_cache_loop(db))
+
+    # Команды и описание бота — через Bot API вместо ручных шагов в BotFather.
+    # Идемпотентно, безопасно на каждом старте (см. app/bot_profile.py).
+    await configure_bot_profile(bot, settings.admin_ids_set)
 
     # Mini App: aiohttp-сервер в том же процессе (Фаза 3, см. CLAUDE.md).
     webapp_runner = await run_webapp_server(db, settings)
