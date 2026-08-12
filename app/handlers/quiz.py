@@ -14,6 +14,7 @@ from aiogram.types import CallbackQuery, Message
 from app import texts
 from app.config import Settings
 from app.db import touch_daily_streak
+from app.handlers.filters import not_a_command
 from app.keyboards import CB_THEORY, main_menu
 from app.payments.gate import check_and_consume
 from app.payments.plans import FREE_DAILY_TASKS
@@ -159,7 +160,7 @@ async def on_mcq_answered(
     )
 
 
-@router.message(QuizStates.in_session)
+@router.message(QuizStates.in_session, not_a_command)
 async def on_free_text_answer(
     message: Message, db: aiosqlite.Connection, state: FSMContext
 ) -> None:

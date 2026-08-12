@@ -17,6 +17,7 @@ from app import texts
 from app.admin import repo as admin_repo
 from app.admin.keyboards import CB_APPROVE, CB_EDIT, CB_REJECT, CB_SKIP, review_keyboard
 from app.config import Settings
+from app.handlers.filters import not_a_command
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +117,7 @@ async def on_edit(callback: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(ReviewStates.editing_body)
 
 
-@router.message(ReviewStates.editing_body)
+@router.message(ReviewStates.editing_body, not_a_command)
 async def on_new_body(message: Message, db: aiosqlite.Connection, state: FSMContext) -> None:
     new_body = (message.text or "").strip()
     if not new_body:

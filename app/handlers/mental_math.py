@@ -16,6 +16,7 @@ from aiogram.types import CallbackQuery, Message
 from app import texts
 from app.config import Settings
 from app.db import touch_daily_streak
+from app.handlers.filters import not_a_command
 from app.keyboards import CB_MENTAL_MATH, main_menu
 from app.mental_math import repo as mm_repo
 from app.mental_math.answer_check import parse_answer
@@ -100,7 +101,7 @@ async def _send_task(message: Message, state: FSMContext) -> None:
     await message.answer(task.prompt, reply_markup=stop_keyboard())
 
 
-@router.message(MentalMathStates.in_session)
+@router.message(MentalMathStates.in_session, not_a_command)
 async def on_answer(message: Message, db: aiosqlite.Connection, state: FSMContext) -> None:
     data = await state.get_data()
     current = data.get("current_task")

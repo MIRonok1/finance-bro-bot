@@ -14,6 +14,7 @@ from aiogram.types import CallbackQuery, Message
 
 from app import texts
 from app.config import Settings
+from app.handlers.filters import not_a_command
 from app.keyboards import CB_PORTFOLIO, main_menu
 from app.mental_math.generators import fmt_decimal
 from app.portfolio import repo
@@ -117,7 +118,7 @@ async def on_buy_start(callback: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(PortfolioStates.buying_ticker)
 
 
-@router.message(PortfolioStates.buying_ticker)
+@router.message(PortfolioStates.buying_ticker, not_a_command)
 async def on_buy_ticker(message: Message, db: aiosqlite.Connection, state: FSMContext) -> None:
     ticker = (message.text or "").strip().upper()
     if not ticker:
@@ -136,7 +137,7 @@ async def on_buy_ticker(message: Message, db: aiosqlite.Connection, state: FSMCo
     await state.set_state(PortfolioStates.buying_quantity)
 
 
-@router.message(PortfolioStates.buying_quantity)
+@router.message(PortfolioStates.buying_quantity, not_a_command)
 async def on_buy_quantity(message: Message, db: aiosqlite.Connection, state: FSMContext) -> None:
     quantity = _parse_positive_int(message.text)
     if quantity is None:
@@ -238,7 +239,7 @@ async def on_sell_ticker_chosen(
     await state.set_state(PortfolioStates.selling_quantity)
 
 
-@router.message(PortfolioStates.selling_quantity)
+@router.message(PortfolioStates.selling_quantity, not_a_command)
 async def on_sell_quantity(message: Message, db: aiosqlite.Connection, state: FSMContext) -> None:
     quantity = _parse_positive_int(message.text)
     if quantity is None:
