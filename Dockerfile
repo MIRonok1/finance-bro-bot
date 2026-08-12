@@ -1,3 +1,10 @@
+# ПРОВЕРЕНО ВЖИВУЮ (2026-08-12): текущий прод-деплой на Netrun идёт через
+# GitHub-автодетект Python (pip install -r requirements.txt), этот
+# Dockerfile НЕ используется платформой. Оставлен для локальной сборки и
+# на случай, если Netrun добавит поддержку Docker. Именно поэтому
+# webapp/dist коммитится в git предсобранным, а не собирается стадией
+# ниже — см. README.md → «Деплой на Netrun».
+
 # --- Стадия 1: сборка фронтенда Mini App (React + Vite) ---
 FROM node:20-slim AS webapp-build
 

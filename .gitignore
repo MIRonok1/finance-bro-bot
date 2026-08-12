@@ -14,6 +14,10 @@ venv/
 
 # Frontend (webapp/)
 webapp/node_modules/
-webapp/dist/
 webapp/.vite/
 webapp/*.tsbuildinfo
+
+# webapp/dist НЕ игнорируем (сознательное исключение, см. README/CLAUDE.md):
+# Netrun деплоит через автодетект Python и не собирает Dockerfile-стадии,
+# поэтому собранный фронтенд коммитим как есть. Пересобирать и коммитить
+# заново при каждом изменении webapp/src.
